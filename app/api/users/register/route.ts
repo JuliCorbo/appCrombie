@@ -5,9 +5,10 @@ import { sign } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
+
 export async function POST(request: Request) {
   try {
-    const { username, email, password } = await request.json();
+    const { username, email, password, UserRole } = await request.json();
 
     const hash = await bcrypt.hash(password, 10);
     //* codificamos la contraseña antes de cargarla en la db y luego al momento de crear el usuario le asignamos dicha contraseña ya hasheada
@@ -16,11 +17,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "missing fields" }, { status: 400 });
     }
 
-    const sameUserName = await prisma.users.findUnique({
+    const sameUserName = await prisma.user.findUnique({
       where: { username: username },
     });
 
-    const sameEmail = await prisma.users.findUnique({
+    const sameEmail = await prisma.user.findUnique({
       where: { email: email },
     });
 
@@ -37,11 +38,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await prisma.users.create({
+    const result = await prisma.user.create({
       data: {
         username: username,
         password: hash,
         email: email,
+        role: UserRole
       },
     });
     const token = sign(result, `${process.env.AUTH_SECRET}`, {

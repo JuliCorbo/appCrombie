@@ -1,0 +1,33 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url  	    = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      UserRole
+  teacherClasses TeacherClass[]
+
+}
+
+enum UserRole {
+  PROFESSOR
+  STUDENT
+}
+
+model TeacherClass {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  teacher   User     @relation(fields: [teacherId], references: [id])
+  teacherId Int
+}

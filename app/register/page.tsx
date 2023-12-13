@@ -7,19 +7,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from "next/navigation";
 
 
-
-
 const schema = yup.object({
   username: yup.string().required("Username is required"),
   email: yup.string().email("Invalid email").required("Email is required"),
   password: yup
     .string()
     .required("Password is required")
-    .min(8, "Password length should be at least 8 characters")
-    .matches(
-      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
-      "Password must contain at least one letter, one number, and one special character"
-    ),
+    .min(8, "Password length should be at least 8 characters"),
   cpassword: yup
     .string()
     .required("Confirm Password is required")

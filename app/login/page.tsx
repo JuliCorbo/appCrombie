@@ -28,7 +28,7 @@ const LoginForm: React.FC = () => {
     },
   });
 
-  const [error, setError] = React.useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -48,6 +48,10 @@ const LoginForm: React.FC = () => {
         // Por ejemplo, redirigir a una página de dashboard
         const userData = await response.json();
 
+        // Restablecer el estado
+        setError("");
+        setLoading(false);
+
         // Redirigir a la página de dashboard
         router.push("/dashboard");
       } else {
@@ -57,21 +61,27 @@ const LoginForm: React.FC = () => {
       }
     } catch (error) {
       console.error("Error al enviar la solicitud de inicio de sesión", error);
+      setError("Error en el servidor. Por favor, inténtalo de nuevo.");
+      setLoading(false);
     }
   };
 
   return (
-    <main className="h-[100vh]">
+    <main className="h-[100vh] bg-black">
       <div className="h-full w-full relative flex justify-center items-center">
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="max-xs:min-w-0 bg-white p-[32px] bg-opacity-70 rounded-[20px]"
+          className="max-xs:min-w-0 bg-white p-[32px] bg-opacity-80 rounded-[20px] shadow-lg transform hover:scale-105 transition-transform"
         >
           <div className="min-w-[257px]">
-            <h1 className="text-3xl font-bold text-center w-auto">Login</h1>
+            <h1 className="text-3xl font-bold text-center w-auto mb-6 text-black">
+              Login
+            </h1>
             <div className="mb-4">
-              <p className="text-gray-700 font-bold">Email</p>
-              <label className="block text-gray-700 text-sm mb-2">
+              <label className="block text-black text-sm font-bold mb-2">
+                Email
+              </label>
+              <div className="relative">
                 <Controller
                   name="email"
                   control={control}
@@ -79,18 +89,20 @@ const LoginForm: React.FC = () => {
                     <input
                       type="email"
                       {...field}
-                      className="mt-2 block mb-4 p-2 rounded-[30px] bg-[#f5f5f5] w-full"
+                      className="mt-2 block mb-4 p-2 rounded-[30px] bg-[#f5f5f5] text-black w-full focus:outline-none focus:ring focus:border-blue-300"
                     />
                   )}
                 />
-                <p className="text-red-600 text-sm mt-2">
-                  {errors.email?.message}
-                </p>
-              </label>
+              </div>
+              <p className="text-red-600 text-sm mt-2">
+                {errors.email?.message}
+              </p>
             </div>
             <div className="mb-6">
-              <p className="text-gray-700 font-bold">Password </p>
-              <label className="block text-gray-700 text-sm mb-2">
+              <label className="block text-black text-sm font-bold mb-2">
+                Password
+              </label>
+              <div className="relative">
                 <Controller
                   name="password"
                   control={control}
@@ -98,19 +110,19 @@ const LoginForm: React.FC = () => {
                     <input
                       type="password"
                       {...field}
-                      className="mt-2 block mb-4 p-2 rounded-[30px] bg-[#f5f5f5] w-full"
+                      className="mt-2 block mb-4 p-2 rounded-[30px] bg-[#f5f5f5] text-black w-full focus:outline-none focus:ring focus:border-blue-300"
                     />
                   )}
                 />
-                <p className="text-red-600 text-sm mt-2">
-                  {errors.password?.message}
-                </p>
-              </label>
+              </div>
+              <p className="text-red-600 text-sm mt-2">
+                {errors.password?.message}
+              </p>
             </div>
             <div className="flex items-center justify-center">
               <button
                 type="submit"
-                className="mt-[17px] px-7 py-3 text-base bg-black text-white rounded-[40px] block w-full"
+                className="mt-[17px] px-7 py-3 text-base bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-[40px] block w-full hover:opacity-90 focus:outline-none focus:ring focus:border-blue-300 transition-all duration-300"
                 disabled={loading}
               >
                 {loading ? <p>Loading</p> : <p>Login</p>}

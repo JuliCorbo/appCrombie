@@ -5,54 +5,65 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
 
-// Define el esquema de validación con Yup
 const schema = yup.object({
+  userType: yup.string().required("User type is required"),
   username: yup.string().required("Username is required"),
   email: yup.string().email("Invalid email").required("Email is required"),
   password: yup
     .string()
     .required("Password is required")
-    .min(8, "Password length should be at least 8 characters"),
+    .min(8, "Password length should be at least 8 characters")
+    .matches(
+      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
+      "Password must contain at least one letter, one number, and one special character"
+    ),
   cpassword: yup
     .string()
     .required("Confirm Password is required")
     .oneOf([yup.ref("password")], "Passwords do not match"),
+  teacherCode: yup.string().test({
+    name: "teacherCode",
+    message: "Teacher code is required for teachers",
+    test: function (value) {
+      const userType = this.resolve(yup.ref("userType"));
+      return userType === "teacher" ? !!value : true;
+    },
+  }),
 });
 
-// Define el tipo de datos para el formulario
 type FormData = {
+  userType: "student" | "teacher";
   username: string;
   email: string;
   password: string;
   cpassword: string;
+  teacherCode?: string;
 };
 
-// Componente del formulario de registro
 const RegisterForm: React.FC = () => {
-  // Configura el formulario con react-hook-form
   const {
     control,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<FormData>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any, // Utilizamos 'as any' para evitar errores de tipo
     defaultValues: {
+      userType: "student",
       username: "",
       email: "",
       password: "",
       cpassword: "",
+      teacherCode: "",
     },
   });
 
-  // Estados para manejar mensajes de error y éxito
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState("");
   const [loading, setLoading] = useState(false);
-
-  // Accede al enrutador de Next.js para la redirección después del registro exitoso
   const router = useRouter();
 
-  // Función que se ejecuta al enviar el formulario
   const onSubmit = async (data: FormData) => {
     try {
       setLoading(true);
@@ -68,13 +79,10 @@ const RegisterForm: React.FC = () => {
         const responseData = await response.json();
         setSuccess("done");
         setError("");
-
-        // Redirige a la página de dashboard después del registro exitoso
         router.push("/dashboard");
       } else {
         setLoading(false);
         const errorData = await response.json();
-        // Maneja diferentes tipos de errores de registro
         if (
           errorData.message ===
           "Invalid username, this username has already been used"
@@ -100,24 +108,76 @@ const RegisterForm: React.FC = () => {
   };
 
   return (
-    <main className="h-[100vh] bg-black">
+    <main className="h-[100vh]">
       <div className="h-full w-full relative flex justify-center items-center">
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="max-xs:min-w-0 bg-white p-[32px] bg-opacity-70 rounded-[20px] shadow-lg transform hover:scale-105 transition-transform"
+          className="max-xs:min-w-0 bg-gradient-to-r from-pink-200 via-pink-100 to-white p-[32px] bg-opacity-70 rounded-[20px] shadow-md border border-gray-200"
         >
-          <div className="min-w-[257px]">
-            <h1 className="text-3xl font-bold text-center w-auto mb-6 text-black">
+          <div className="min-w-[300px]">
+            <h1 className="text-3xl font-bold text-center mb-2 text-black">
               Sign Up
             </h1>
-            <p className="text-center mt-2 mb-6 text-sm w-auto text-black">
-             Do not waste your time
+            <p className="text-center text-sm mb-6 text-gray-700">
+              Sign Up Instructions
             </p>
+
             <div className="mb-4">
-              <label className="block text-black text-sm font-bold mb-2">
-                Username
-              </label>
-              <div className="relative">
+              <p className="text-gray-700 font-bold mb-1 text-center">User Type</p>
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setValue("userType", "student")}
+                  className={`mr-2 p-3 rounded-md transition-all duration-300 ${
+                    watch("userType") === "student"
+                      ? "bg-pink-500 text-white transform scale-105"
+                      : "bg-gray-100 text-black hover:bg-pink-500 hover:text-white"
+                  }`}
+                >
+                  Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setValue("userType", "teacher")}
+                  className={`p-3 rounded-md transition-all duration-300 ${
+                    watch("userType") === "teacher"
+                      ? "bg-pink-500 text-white transform scale-105"
+                      : "bg-gray-100 text-black hover:bg-pink-500 hover:text-white"
+                  }`}
+                >
+                  Teacher
+                </button>
+              </div>
+              <p className="text-red-600 text-sm mt-2">
+                {errors.userType?.message}
+              </p>
+            </div>
+
+            {watch("userType") === "teacher" && (
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm mb-2">
+                  <p className="text-gray-700 font-bold mb-1">Teacher Code</p>
+                  <Controller
+                    name="teacherCode"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        type="text"
+                        {...field}
+                        className="mt-2 block mb-4 p-3 rounded-md bg-gray-100 text-gray-800 w-full"
+                      />
+                    )}
+                  />
+                  <p className="text-red-600 text-sm mt-2">
+                    {errors.teacherCode?.message}
+                  </p>
+                </label>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm mb-2">
+                <p className="text-gray-700 font-bold mb-1">Username</p>
                 <Controller
                   name="username"
                   control={control}
@@ -125,20 +185,19 @@ const RegisterForm: React.FC = () => {
                     <input
                       type="text"
                       {...field}
-                      className="mt-2 block mb-4 p-2 rounded-[30px] bg-[#f5f5f5] text-black w-full focus:outline-none focus:ring focus:border-blue-300"
+                      className="mt-2 block mb-4 p-3 rounded-md bg-gray-100 text-gray-800 w-full"
                     />
                   )}
                 />
-              </div>
-              <p className="text-red-600 text-sm mt-2">
-                {errors.username?.message}
-              </p>
-            </div>
-            <div className="mb-4">
-              <label className="block text-black text-sm font-bold mb-2">
-                Email
+                <p className="text-red-600 text-sm mt-2">
+                  {errors.username?.message}
+                </p>
               </label>
-              <div className="relative">
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm mb-2">
+                <p className="text-gray-700 font-bold mb-1">Email</p>
                 <Controller
                   name="email"
                   control={control}
@@ -146,20 +205,19 @@ const RegisterForm: React.FC = () => {
                     <input
                       type="email"
                       {...field}
-                      className="mt-2 block mb-4 p-2 rounded-[30px] bg-[#f5f5f5] text-black w-full focus:outline-none focus:ring focus:border-blue-300"
+                      className="mt-2 block mb-4 p-3 rounded-md bg-gray-100 text-gray-800 w-full"
                     />
                   )}
                 />
-              </div>
-              <p className="text-red-600 text-sm mt-2">
-                {errors.email?.message}
-              </p>
-            </div>
-            <div className="mb-4">
-              <label className="block text-black text-sm font-bold mb-2">
-                Password
+                <p className="text-red-600 text-sm mt-2">
+                  {errors.email?.message}
+                </p>
               </label>
-              <div className="relative">
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm mb-2">
+                <p className="text-gray-700 font-bold mb-1">Password</p>
                 <Controller
                   name="password"
                   control={control}
@@ -167,20 +225,19 @@ const RegisterForm: React.FC = () => {
                     <input
                       type="password"
                       {...field}
-                      className="mt-2 block mb-4 p-2 rounded-[30px] bg-[#f5f5f5] text-black w-full focus:outline-none focus:ring focus:border-blue-300"
+                      className="mt-2 block mb-4 p-3 rounded-md bg-gray-100 text-gray-800 w-full"
                     />
                   )}
                 />
-              </div>
-              <p className="text-red-600 text-sm mt-2">
-                {errors.password?.message}
-              </p>
-            </div>
-            <div className="mb-6">
-              <label className="block text-black text-sm font-bold mb-2">
-                Confirm Password
+                <p className="text-red-600 text-sm mt-2">
+                  {errors.password?.message}
+                </p>
               </label>
-              <div className="relative">
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm mb-2">
+                <p className="text-gray-700 font-bold mb-1">Confirm Password</p>
                 <Controller
                   name="cpassword"
                   control={control}
@@ -188,28 +245,34 @@ const RegisterForm: React.FC = () => {
                     <input
                       type="password"
                       {...field}
-                      className="mt-2 block mb-4 p-2 rounded-[30px] bg-[#f5f5f5] text-black w-full focus:outline-none focus:ring focus:border-blue-300"
+                      className="mt-2 block mb-4 p-3 rounded-md bg-gray-100 text-gray-800 w-full"
                     />
                   )}
                 />
-              </div>
-              <p className="text-red-600 text-sm mt-2">
-                {errors.cpassword?.message}
-              </p>
+                <p className="text-red-600 text-sm mt-2">
+                  {errors.cpassword?.message}
+                </p>
+              </label>
             </div>
+
             <div className="flex items-center justify-center">
               <button
                 type="submit"
-                className="mt-[17px] px-7 py-3 text-base bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-[40px] block w-full hover:opacity-90 focus:outline-none focus:ring focus:border-blue-300 transition-all duration-300"
+                className="mt-4 px-8 py-3 text-base bg-pink-500 hover:bg-pink-600 text-white rounded-full block w-full focus:outline-none focus:ring focus:border-blue-300"
               >
-                {loading ? <p>Loading</p> : <p>Register</p>}
+                {loading ? (
+                  <p className="text-center">Loading</p>
+                ) : (
+                  <p className="text-center">Register</p>
+                )}
               </button>
             </div>
+
             {error.length > 0 ? (
               <p className="text-red-600 text-sm mt-2 text-center">{error}</p>
             ) : success === "done" ? (
               <p className="text-green-600 text-sm mt-3 text-center">
-                PleaseWait
+                Please Wait
               </p>
             ) : (
               <p></p>

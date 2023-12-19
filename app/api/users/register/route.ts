@@ -10,6 +10,8 @@ export async function POST(request: Request) {
   try {
     const { username, email, password, UserRole } = await request.json();
 
+    console.log(username, email, password, UserRole);
+
     const hash = await bcrypt.hash(password, 10);
     //* codificamos la contraseña antes de cargarla en la db y luego al momento de crear el usuario le asignamos dicha contraseña ya hasheada
 
@@ -46,12 +48,17 @@ export async function POST(request: Request) {
         role: UserRole
       },
     });
+
+console.log(result);
+
     const token = sign(result, `${process.env.AUTH_SECRET}`, {
       expiresIn: "1h",
     });
 
     //* Generamos el token y luego lo enviamos como respuesta
     cookies().set("token", token);
+
+
 
     try {
       return NextResponse.json({ result, token }, { status: 201 });
